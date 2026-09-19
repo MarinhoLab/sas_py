@@ -11,6 +11,11 @@ echo "=== Version scheme (rolling YY.MM.NN) ==="
 echo "=== pip install . --no-build-isolation ==="
 python3 -m pip install --no-cache-dir --break-system-packages . --no-build-isolation
 
+# Run the checks from a neutral directory so `import marinholab` resolves to
+# the *installed* package in site-packages, not the source tree in /opt/sas_py
+# (which would shadow it and lacks the compiled _core extension).
+cd /root
+
 echo "=== Import + public API check ==="
 python3 - <<'EOF'
 import marinholab.sas.core as core
