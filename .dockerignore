@@ -1,0 +1,10 @@
+# Keep .git (needed by setuptools-git-versioning for the rolling version),
+# but drop the rest that is not needed in the image.
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
+venv/
