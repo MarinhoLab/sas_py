@@ -1,0 +1,2 @@
+include marinholab/sas/core/py.typed
+include marinholab/sas/core/*.pyi

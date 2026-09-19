@@ -1,0 +1,56 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools-git-versioning>=2.0,<3",
+    "ninja",
+    "cmake>=3.16",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marinholab-sas-core"
+description = "Python bindings for the ROS-free SmartArmStack C++ core (marinholab_sas_core)."
+readme = "README.md"
+requires-python = ">= 3.10"
+license = {text = "LGPL-3.0-or-later"}
+authors = [
+    {name = "Murilo M. Marinho", email = "murilomarinho@ieee.org"}
+]
+maintainers = [
+    {name = "Murilo M. Marinho", email = "murilomarinho@ieee.org"}
+]
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+]
+
+[project.scripts]
+sas_core_clock_example = "marinholab.sas.core.example_clock:main"
+sas_core_clock_sched_fifo_example = "marinholab.sas.core.example_clock_sched_fifo:main"
+sas_core_robot_driver_subclass_example = "marinholab.sas.core.example_robot_driver_subclass:main"
+
+[tool.setuptools.packages.find]
+include = ["marinholab*"]
+
+[tool.setuptools.package-data]
+"marinholab.sas.core" = ["py.typed", "*.pyi"]
+
+# https://pypi.org/project/setuptools-git-versioning/
+# Rolling version scheme, matching Marinholab/sas_cpp's YY.MM.NN intent:
+#   YY.MM  = a monthly version tag (no "v" prefix), e.g. 26.09.
+#   .NN    = the number of commits since that tag ({ccount}).
+# A checkout {N} commits after tag 26.09 builds as 26.09.N; an untagged
+# checkout builds as 0.0.1 (the default starting_version, a dev release).
+[tool.setuptools-git-versioning]
+enabled = true
+dev_template = "{tag}.{ccount}"
+dirty_template = "{tag}.{ccount}"
+
+[tool.pyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.10"
+include = ["marinholab"]
+exclude = [
+    "**/example*.py",
+]
