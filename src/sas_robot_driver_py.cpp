@@ -107,8 +107,10 @@ public:
 
     std::tuple<VectorXd, VectorXd> get_joint_limits() override
     {
+        // The return type contains a comma, so it must be wrapped in
+        // PYBIND11_TYPE(...) to keep the macro's argument list intact.
         PYBIND11_OVERRIDE(
-        std::tuple<VectorXd, VectorXd>,
+        PYBIND11_TYPE(std::tuple<VectorXd, VectorXd>),
         RobotDriver,
         get_joint_limits,
         );
