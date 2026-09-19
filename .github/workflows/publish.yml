@@ -52,8 +52,6 @@ jobs:
         run: |
           brew update
           brew install eigen
-          # dqrobotics has no macOS package; build it from source into
-          # /usr/local so sas_cpp's find_library resolves it.
           git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics/cpp
           cmake -S dqrobotics/cpp -B dqrobotics/cpp/build \
                 -DCMAKE_BUILD_TYPE=Release \
@@ -76,20 +74,24 @@ jobs:
         # is pwsh, where it would be passed literally to cmake).
         shell: cmd
         run: |
-          :: pip's ninja package puts ninja.exe on PATH for the -G Ninja below
-          python -m pip install ninja
+          :: Use the DEFAULT (Visual Studio / MSVC) generator so dqrobotics is
+          :: built with cl.exe, the same compiler the wheel uses. Do NOT use
+          :: -G Ninja here: on this runner Ninja picks the pre-installed MinGW
+          :: g++ and produces a libdqrobotics.dll.a that MSVC cannot link.
           git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics\cpp
-          cmake -G Ninja -S dqrobotics\cpp -B dqrobotics\cpp\build ^
+          cmake -S dqrobotics\cpp -B dqrobotics\cpp\build ^
                 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^
                 -DVCPKG_TARGET_TRIPLET=x64-windows ^
-                -DCMAKE_BUILD_TYPE=Release ^
                 -DCMAKE_INSTALL_PREFIX=C:\dqrobotics
-          cmake --build dqrobotics\cpp\build
-          cmake --install dqrobotics\cpp\build
+          cmake --build dqrobotics\cpp\build --config Release -j
+          cmake --install dqrobotics\cpp\build --config Release
+          :: Multi-config (MSBuild) install puts the import lib in lib\Release.
+          :: sas_cpp's find_library(HINTS C:/dqrobotics) only searches lib\, so
+          :: copy the .lib up one level to make it discoverable.
+          copy /Y C:\dqrobotics\lib\Release\*.lib C:\dqrobotics\lib\
 
       # ── Build ───────────────────────────────────────────────────
-      # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics
-      # (single-config Ninja layout: C:/dqrobotics/lib/dqrobotics.lib).
+      # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics.
       # setup.py forwards CMAKE_ARGS to the CMake configure step.
       - name: Build wheel
         run: |
