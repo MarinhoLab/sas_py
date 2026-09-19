@@ -46,6 +46,7 @@ jobs:
           sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
 
       # ── macOS dependencies ──────────────────────────────────────
+      # (macOS is not in the matrix yet; kept for when it is added.)
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -53,7 +54,7 @@ jobs:
           brew install eigen
           # dqrobotics has no macOS package; build it from source into
           # /usr/local so sas_cpp's find_library resolves it.
-          git clone --depth 1 https://github.com/dqrobotics/cpp.git
+          git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics/cpp
           cmake -S dqrobotics/cpp -B dqrobotics/cpp/build \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_PREFIX_PATH="$(brew --prefix)"
@@ -71,22 +72,32 @@ jobs:
 
       - name: Build & install dqrobotics (Windows)
         if: runner.os == 'Windows'
+        # '^' line-continuation is cmd.exe syntax (the default runner shell
+        # is pwsh, where it would be passed literally to cmake).
+        shell: cmd
         run: |
-          git clone --depth 1 https://github.com/dqrobotics/cpp.git
-          cmake -S dqrobotics/cpp -B dqrobotics/cpp/build ^
-                -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ^
+          :: pip's ninja package puts ninja.exe on PATH for the -G Ninja below
+          python -m pip install ninja
+          git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics\cpp
+          cmake -G Ninja -S dqrobotics\cpp -B dqrobotics\cpp\build ^
+                -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^
                 -DVCPKG_TARGET_TRIPLET=x64-windows ^
                 -DCMAKE_BUILD_TYPE=Release ^
-                -DCMAKE_INSTALL_PREFIX=C:/dqrobotics
-          cmake --build dqrobotics/cpp/build --config Release -j
-          cmake --install dqrobotics/cpp/build --config Release
+                -DCMAKE_INSTALL_PREFIX=C:\dqrobotics
+          cmake --build dqrobotics\cpp\build
+          cmake --install dqrobotics\cpp\build
 
       # ── Build ───────────────────────────────────────────────────
+      # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics
+      # (single-config Ninja layout: C:/dqrobotics/lib/dqrobotics.lib).
+      # setup.py forwards CMAKE_ARGS to the CMake configure step.
       - name: Build wheel
         run: |
           python -m pip install --upgrade pip
           pip install build
           python -m build --wheel
+        env:
+          CMAKE_ARGS: ${{ runner.os == 'Windows' && '-DCMAKE_PREFIX_PATH=C:/dqrobotics' || '' }}
 
       # PyPI rejects wheels tagged `linux_x86_64`/`linux_aarch64` (it requires
       # a PEP 600 `manylinux` tag). auditwheel relinks/bundles as needed and
