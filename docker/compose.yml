@@ -1,0 +1,8 @@
+services:
+  marinholab_sas_core:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      PYTHONUNBUFFERED: "1"
+    command: /opt/sas_py/docker/build.sh
