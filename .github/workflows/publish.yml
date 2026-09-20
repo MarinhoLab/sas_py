@@ -31,8 +31,10 @@ jobs:
           cache: 'pip'
 
       # ── Ubuntu dependencies ─────────────────────────────────────
-      # libdqrobotics comes from the DQ Robotics PPA; patchelf is a native
-      # prerequisite of `auditwheel repair` below.
+      # libdqrobotics comes from the DQ Robotics PPA (shared library —
+      # see "dqrobotics is dynamically linked on every platform" in
+      # CMakeLists.txt); patchelf is a native prerequisite of
+      # `auditwheel repair` below, which bundles it into the wheel.
       - name: Install system dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
@@ -61,12 +63,16 @@ jobs:
 
       # ── Windows dependencies ────────────────────────────────────
       # dqrobotics/cpp expects the vcpkg toolchain at C:/vcpkg.
-      - name: Install vcpkg at C:/vcpkg
+      # C:/vcpkg is pre-installed on windows-latest, so clone only if
+      # absent (the old unconditional clone failed every run).
+      - name: Prepare vcpkg at C:/vcpkg
         if: runner.os == 'Windows'
         run: |
-          git clone https://github.com/microsoft/vcpkg C:/vcpkg
-          C:/vcpkg/./bootstrap-vcpkg.bat
-          C:/vcpkg/./vcpkg install eigen3:x64-windows
+          if not exist C:\vcpkg\bootstrap-vcpkg.bat (
+            git clone https://github.com/microsoft/vcpkg C:\vcpkg
+          )
+          C:\vcpkg\bootstrap-vcpkg.bat
+          C:\vcpkg\vcpkg install eigen3:x64-windows
 
       - name: Build & install dqrobotics (Windows)
         if: runner.os == 'Windows'
@@ -85,14 +91,19 @@ jobs:
                 -DCMAKE_INSTALL_PREFIX=C:\dqrobotics
           cmake --build dqrobotics\cpp\build --config Release -j
           cmake --install dqrobotics\cpp\build --config Release
-          :: Multi-config (MSBuild) install puts the import lib in lib\Release.
-          :: sas_cpp's find_library(HINTS C:/dqrobotics) only searches lib\, so
-          :: copy the .lib up one level to make it discoverable.
-          copy /Y C:\dqrobotics\lib\Release\*.lib C:\dqrobotics\lib\
+          :: The install layout is fixed by dqrobotics/cpp's install() rules:
+          ::   C:\dqrobotics\lib\dqrobotics.lib   (import library, for the link)
+          ::   C:\dqrobotics\bin\dqrobotics.dll   (runtime, bundled into the
+          ::                                       wheel by the POST_BUILD copy
+          ::                                       in the top-level CMakeLists.txt)
+          :: No copy of the .lib is needed: sas_cpp's find_library searches
+          :: C:/dqrobotics (CMAKE_PREFIX_PATH below) and finds it in lib\.
 
       # ── Build ───────────────────────────────────────────────────
       # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics.
-      # setup.py forwards CMAKE_ARGS to the CMake configure step.
+      # setup.py forwards CMAKE_ARGS to the CMake configure step; the
+      # top-level CMakeLists.txt uses the same CMAKE_PREFIX_PATH to locate
+      # and bundle dqrobotics.dll next to _core.pyd.
       - name: Build wheel
         run: |
           python -m pip install --upgrade pip
