@@ -23,6 +23,13 @@ maintainers = [
 dynamic = ["version"]
 dependencies = [
     "numpy",
+    # dqrobotics is on PyPI only as pre-releases, so `pip install dqrobotics`
+    # needs `--pre` to pick it up. A pre-release lower bound makes pip select
+    # pre-releases for this requirement automatically (and switches to a
+    # stable release as soon as one is published). 26.4.0a6 is the first
+    # pre-release with wheels for every CI platform (win_amd64,
+    # manylinux2014_x86_64, manylinux2014_aarch64).
+    "dqrobotics>=26.4.0a6",
 ]
 
 [project.scripts]
