@@ -85,10 +85,6 @@ jobs:
                 -DCMAKE_INSTALL_PREFIX=C:\dqrobotics
           cmake --build dqrobotics\cpp\build --config Release -j
           cmake --install dqrobotics\cpp\build --config Release
-          :: Multi-config (MSBuild) install puts the import lib in lib\Release.
-          :: sas_cpp's find_library(HINTS C:/dqrobotics) only searches lib\, so
-          :: copy the .lib up one level to make it discoverable.
-          copy /Y C:\dqrobotics\lib\Release\*.lib C:\dqrobotics\lib\
 
       # ── Build ───────────────────────────────────────────────────
       # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics.
