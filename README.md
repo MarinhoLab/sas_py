@@ -15,6 +15,7 @@
 
 - `marinholab/sas/core/` — the Python package.
   - `_core.*` — compiled pybind11 extension (the C++ bindings live in `src/`).
+  - `modeling/` — kinematic modeling bindings (re-exported from `_core`).
   - `example_*.py` — example scripts (also installed as commands).
 - `src/` — the C++ binding sources (ported from `SmartArmStack/sas_core`).
 - `submodules/sas_cpp` — the C++ core (git submodule, consumed via CMake).
@@ -23,6 +24,8 @@
 
 The C++ core depends on **Eigen3** and **dqrobotics** (the latter is located
 by CMake at build time; on Debian/Ubuntu it comes from the DQ Robotics PPA).
+The Python package additionally depends on the `dqrobotics` Python package,
+which registers the dual-quaternion types the bindings expose.
 
 ## Installation
 
@@ -77,6 +80,28 @@ class MyDriver(RobotDriver):
         ...
     def deinitialize(self):
         ...
+```
+
+### Kinematic modeling
+
+```python
+import numpy as np
+from dqrobotics import DQ
+from marinholab.sas.core import SerialManipulatorSimulatorFriendly
+
+# 3 revolute joints about X, Y, Z with zero per-joint offsets.
+arm = SerialManipulatorSimulatorFriendly(
+    offset_before=[DQ(1), DQ(1), DQ(1)],
+    offset_after=[DQ(1), DQ(1), DQ(1)],
+    actuation_types=[
+        SerialManipulatorSimulatorFriendly.ActuationType.RX,
+        SerialManipulatorSimulatorFriendly.ActuationType.RY,
+        SerialManipulatorSimulatorFriendly.ActuationType.RZ,
+    ],
+)
+q = np.array([0.1, -0.2, 0.3])
+x = arm.raw_fkm(q, 2)                 # dual-quaternion pose of the end-effector
+J = arm.raw_pose_jacobian(q, 2)       # 8 x 3 pose Jacobian
 ```
 
 The examples are installed as commands:

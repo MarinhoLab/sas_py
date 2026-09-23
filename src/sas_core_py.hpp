@@ -38,4 +38,5 @@ namespace py = pybind11;
 namespace marinholab::sas::core
 {
     void init_sas_robot_driver_py(py::module_& m);
+    void init_sas_modeling_py(py::module_& m);
 }
