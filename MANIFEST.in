@@ -1,2 +1,3 @@
 include marinholab/sas/core/py.typed
 include marinholab/sas/core/*.pyi
+include marinholab/sas/core/modeling/py.typed

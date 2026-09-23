@@ -39,10 +39,12 @@ PYBIND11_MODULE(_core, m) {
     // Module docstring (Doxygen-style tags included for downstream extraction)
     m.doc() = R"pbdoc(
 @file _core
-@brief Python bindings for core utilities (Clock, ShutdownSignaler, RobotDriver classes).
+@brief Python bindings for core utilities (Clock, ShutdownSignaler, RobotDriver
+classes) and kinematic modeling (SerialManipulatorSimulatorFriendly).
 )pbdoc";
 
     marinholab::sas::core::init_sas_robot_driver_py(m);
+    marinholab::sas::core::init_sas_modeling_py(m);
 
     py::enum_<marinholab::sas::core::Statistics>(m, "Statistics", R"pbdoc(@brief Statistic types used by the Clock class.
 

@@ -26,6 +26,7 @@ add_subdirectory(submodules/pybind11)
 pybind11_add_module(_core MODULE
     src/sas_core_py.cpp
     src/sas_robot_driver_py.cpp
+    src/sas_modeling_py.cpp
 )
 
 target_link_libraries(_core PRIVATE marinholab::sas::core)

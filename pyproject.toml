@@ -23,6 +23,7 @@ maintainers = [
 dynamic = ["version"]
 dependencies = [
     "numpy",
+    "dqrobotics>=20.4.0",
 ]
 
 [project.scripts]
@@ -35,6 +36,7 @@ include = ["marinholab*"]
 
 [tool.setuptools.package-data]
 "marinholab.sas.core" = ["py.typed", "*.pyi"]
+"marinholab.sas.core.modeling" = ["py.typed", "*.pyi"]
 
 # https://pypi.org/project/setuptools-git-versioning/
 # Rolling version scheme, matching Marinholab/sas_cpp's YY.MM.NN intent:
@@ -54,3 +56,10 @@ include = ["marinholab"]
 exclude = [
     "**/example*.py",
 ]
+# `dqrobotics` is an untyped compiled package (no `py.typed`, no shipped
+# stubs). `stubs/dqrobotics/` declares the closed set of symbols this project
+# imports so pyright can fully check the codebase. If `dqrobotics` ever ships
+# type information, delete `stubs/` and this `stubPath` entry.
+stubPath = "stubs"
+venvPath = "."
+venv = ""
