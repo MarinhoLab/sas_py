@@ -5,12 +5,15 @@ from typing import Optional
 from datetime import datetime, timedelta
 
 import numpy as np
+from dqrobotics import DQ
+from dqrobotics.robot_modeling import DQ_SerialManipulator
 
 __all__ = [
     "Statistics",
     "ShutdownSignaler",
     "Clock",
     "RobotDriver",
+    "SerialManipulatorSimulatorFriendly",
 ]
 
 
@@ -137,3 +140,94 @@ class RobotDriver:
 
     def initialize(self) -> None: ...
     def deinitialize(self) -> None: ...
+
+
+class SerialManipulatorSimulatorFriendly(DQ_SerialManipulator):
+    """A serial manipulator whose joints carry explicit pre/post offsets.
+
+    Each joint contributes a dual-quaternion transformation of the form
+    ``offset_before * actuation(q) * offset_after``. Supports both revolute
+    (R) and prismatic (T) joints about any principal axis.
+
+    Inherits from ``DQ_SerialManipulator`` and overrides the raw kinematic
+    methods. The ``ActuationType`` enum is registered as a nested attribute
+    of the class, so it is reachable as
+    ``SerialManipulatorSimulatorFriendly.ActuationType.RX``.
+    """
+
+    class ActuationType:
+        """The actuation type and axis of a single joint.
+
+        - RZ: Revolution about the z-axis.
+        - RY: Revolution about the y-axis.
+        - RX: Revolution about the x-axis.
+        - TZ: Translation along the z-axis.
+        - TY: Translation along the y-axis.
+        - TX: Translation along the x-axis.
+        """
+
+        RZ: "SerialManipulatorSimulatorFriendly.ActuationType"
+        RY: "SerialManipulatorSimulatorFriendly.ActuationType"
+        RX: "SerialManipulatorSimulatorFriendly.ActuationType"
+        TZ: "SerialManipulatorSimulatorFriendly.ActuationType"
+        TY: "SerialManipulatorSimulatorFriendly.ActuationType"
+        TX: "SerialManipulatorSimulatorFriendly.ActuationType"
+
+    def __init__(
+        self,
+        offset_before: list[DQ],
+        offset_after: list[DQ],
+        actuation_types: list[ActuationType],
+    ) -> None:
+        """Construct the manipulator.
+
+        Args:
+            offset_before: Per-joint dual-quaternion offset applied before
+                actuation.
+            offset_after: Per-joint dual-quaternion offset applied after
+                actuation.
+            actuation_types: Per-joint actuation type and axis.
+
+        Raises:
+            RuntimeError: If the three vectors do not have equal size.
+        """
+        ...
+
+    def raw_fkm(self, q_vec: np.ndarray, to_ith_link: int) -> DQ:
+        """Raw forward kinematics of the chain up to a given link.
+
+        Args:
+            q_vec: Joint configuration vector.
+            to_ith_link: Index of the terminal link.
+
+        Returns:
+            The dual-quaternion pose of the terminal link.
+        """
+        ...
+
+    def raw_pose_jacobian(self, q_vec: np.ndarray, to_ith_link: int) -> np.ndarray:
+        """Raw pose Jacobian of the chain up to a given link.
+
+        Args:
+            q_vec: Joint configuration vector.
+            to_ith_link: Index of the terminal link.
+
+        Returns:
+            An 8 x (to_ith_link+1) dual-quaternion pose Jacobian.
+        """
+        ...
+
+    def raw_pose_jacobian_derivative(
+        self, q: np.ndarray, q_dot: np.ndarray, to_ith_link: int
+    ) -> np.ndarray:
+        """Time derivative of the raw pose Jacobian.
+
+        Args:
+            q: Joint configuration vector.
+            q_dot: Joint velocity vector.
+            to_ith_link: Index of the terminal link.
+
+        Returns:
+            An 8 x (to_ith_link+1) Jacobian-derivative matrix.
+        """
+        ...

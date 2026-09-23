@@ -18,8 +18,16 @@ cd /root
 
 echo "=== Import + public API check ==="
 python3 - <<'EOF'
+import numpy as np
 import marinholab.sas.core as core
-from marinholab.sas.core import Clock, Statistics, RobotDriver, ShutdownSignaler
+from marinholab.sas.core import (
+    Clock,
+    Statistics,
+    RobotDriver,
+    ShutdownSignaler,
+    SerialManipulatorSimulatorFriendly,
+    ActuationType,
+)
 
 ss = ShutdownSignaler()
 assert ss.should_shutdown() is False
@@ -30,7 +38,31 @@ clock = Clock(0.001)
 assert clock.get_desired_thread_sampling_time_sec() == 0.001
 assert Clock.TimeType.Computational is not None
 
-print("import + API OK")
+# Modeling: build a 3-joint RX/RY/RZ arm and check that the pose Jacobian
+# agrees with the finite-difference derivative of raw_fkm.
+from dqrobotics import DQ
+
+SM = SerialManipulatorSimulatorFriendly
+AT = SM.ActuationType
+assert AT is ActuationType  # the enum is reachable both ways
+ob = [DQ([1.0, 0.0, 0.0, 0.0])] * 3
+oa = [DQ([1.0, 0.0, 0.0, 0.0])] * 3
+m = SM(ob, oa, [AT.RX, AT.RY, AT.RZ])
+q = np.array([0.1, -0.2, 0.3])
+h = 1e-6
+J = m.raw_pose_jacobian(q, 2)
+assert J.shape == (8, 3), J.shape
+fd = np.zeros((8, 3))
+for c in range(3):
+    qp = q.copy(); qp[c] += h
+    qm = q.copy(); qm[c] -= h
+    fd[:, c] = (np.asarray(m.raw_fkm(qp, 2).vec8()) - np.asarray(m.raw_fkm(qm, 2).vec8())) / (2 * h)
+max_err = np.max(np.abs(J - fd))
+assert max_err < 1e-6, f"Jacobian/FDM mismatch: {max_err}"
+assert np.allclose(m.get_lower_q_limit(), -10.0)
+assert np.allclose(m.get_upper_q_limit(), 10.0)
+
+print("import + API OK (incl. modeling, FD Jacobian err=%.2e)" % max_err)
 EOF
 
 echo "=== Running example scripts ==="
