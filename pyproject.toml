@@ -24,6 +24,8 @@ dynamic = ["version"]
 dependencies = [
     "numpy",
     "dqrobotics>=20.4.0",
+    "marinholab-solvers-qpoases",
+    "termcolor",
 ]
 
 [project.scripts]
@@ -37,6 +39,8 @@ include = ["marinholab*"]
 [tool.setuptools.package-data]
 "marinholab.sas.core" = ["py.typed", "*.pyi"]
 "marinholab.sas.core.modeling" = ["py.typed", "*.pyi"]
+"marinholab.sas.core.papers" = ["py.typed"]
+"marinholab.sas.core.papers.icra2019" = ["py.typed"]
 
 # https://pypi.org/project/setuptools-git-versioning/
 # Rolling version scheme, matching Marinholab/sas_cpp's YY.MM.NN intent:
