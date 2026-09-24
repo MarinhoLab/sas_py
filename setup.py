@@ -124,6 +124,8 @@ setup(
         "marinholab",
         "marinholab.sas",
         "marinholab.sas.core",
+        "marinholab.sas.core.papers",
+        "marinholab.sas.core.papers.icra2019",
     ],
     ext_modules=[CMakeExtension("marinholab.sas.core._core")],
     cmdclass={"build_ext": CMakeBuild},

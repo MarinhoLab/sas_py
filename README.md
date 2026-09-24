@@ -16,6 +16,10 @@
 - `marinholab/sas/core/` — the Python package.
   - `_core.*` — compiled pybind11 extension (the C++ bindings live in `src/`).
   - `modeling/` — kinematic modeling bindings (re-exported from `_core`).
+  - `papers/` — reference implementations from published work.
+    - `papers/icra2019/` — the task-space `Controller` (RCM + joint-limit
+      constraints as a QP) from "A Unified Framework for the Teleoperation of
+      Surgical Robots in Constrained Workspaces" (ICRA 2019).
   - `example_*.py` — example scripts (also installed as commands).
 - `src/` — the C++ binding sources (ported from `SmartArmStack/sas_core`).
 - `submodules/sas_cpp` — the C++ core (git submodule, consumed via CMake).
