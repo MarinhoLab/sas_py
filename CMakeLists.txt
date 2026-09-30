@@ -18,6 +18,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(MARINHO_LAB_SAS_CORE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
+# The dqrobotics headers include both <Eigen/Dense> and <eigen3/Eigen/Dense>.
+# The Eigen3 package provides <prefix>/include/eigen3, which resolves the first;
+# the second needs <prefix>/include, which is on the default search path on
+# Linux (/usr/include) and Windows (the vcpkg include root) but not on macOS
+# (Homebrew's /opt/homebrew/include). Rather than adding all of that prefix
+# (which could shadow, e.g., the pybind11 submodule with a Homebrew pybind11),
+# expose only Eigen: a directory in the build tree holding an "eigen3" link to
+# Eigen's include directory. include_directories applies to sas_cpp as well,
+# since it is added below.
+find_package(Eigen3 REQUIRED)
+if(NOT WIN32)
+    get_target_property(_eigen3_include_dirs Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
+    list(GET _eigen3_include_dirs 0 _eigen3_include_dir)
+    set(_eigen3_shim "${CMAKE_BINARY_DIR}/eigen3_include_shim")
+    file(MAKE_DIRECTORY "${_eigen3_shim}")
+    if(NOT EXISTS "${_eigen3_shim}/eigen3")
+        file(CREATE_LINK "${_eigen3_include_dir}" "${_eigen3_shim}/eigen3" SYMBOLIC)
+    endif()
+    include_directories(SYSTEM "${_eigen3_shim}")
+endif()
+
 add_subdirectory(submodules/sas_cpp)
 
 set(PYBIND11_FINDPYTHON ON)
