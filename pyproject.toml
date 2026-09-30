@@ -21,9 +21,22 @@ maintainers = [
     {name = "Murilo M. Marinho", email = "murilomarinho@ieee.org"}
 ]
 dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+]
 dependencies = [
     "numpy",
-    "dqrobotics>=20.4.0",
+    # Only dqrobotics' pre-releases have wheels for Python >= 3.10; naming a
+    # pre-release here lets pip choose them (with ">=20.4.0" it does not).
+    "dqrobotics>=26.4.0a7",
     "marinholab-solvers-qpoases",
     "termcolor",
 ]
