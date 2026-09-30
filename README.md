@@ -33,6 +33,16 @@ which registers the dual-quaternion types the bindings expose.
 
 ## Installation
 
+From PyPI, with wheels for Python 3.10–3.14 on Linux (x86_64, aarch64), macOS
+(arm64, 14.0 or later) and Windows (x86_64):
+
+```bash
+pip install marinholab-sas-core
+```
+
+The wheels match the Python versions that `dqrobotics` publishes wheels for,
+in its pre-releases, which the requirement `dqrobotics>=26.4.0a7` selects.
+
 From source:
 
 ```bash
@@ -49,6 +59,19 @@ sudo apt install build-essential g++ cmake ninja-build python3-dev libeigen3-dev
 # dqrobotics from the DQ Robotics PPA:
 sudo add-apt-repository -y ppa:dqrobotics-dev/development
 sudo apt install libdqrobotics
+```
+
+On macOS, Eigen comes from Homebrew and `dqrobotics` is built from source
+(there is no Homebrew formula), with the same Eigen:
+
+```bash
+brew install eigen cmake ninja
+git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics-cpp
+cmake -S dqrobotics-cpp -B dqrobotics-cpp/build -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_PREFIX_PATH="$(brew --prefix)" -DCMAKE_INSTALL_PREFIX="$HOME/.local/dqrobotics"
+cmake --build dqrobotics-cpp/build -j && cmake --install dqrobotics-cpp/build
+CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix);$HOME/.local/dqrobotics" \
+    pip install . --no-build-isolation
 ```
 
 ## Usage
@@ -95,8 +118,8 @@ from marinholab.sas.core import SerialManipulatorSimulatorFriendly
 
 # 3 revolute joints about X, Y, Z with zero per-joint offsets.
 arm = SerialManipulatorSimulatorFriendly(
-    offset_before=[DQ(1), DQ(1), DQ(1)],
-    offset_after=[DQ(1), DQ(1), DQ(1)],
+    offset_before=[DQ([1]), DQ([1]), DQ([1])],
+    offset_after=[DQ([1]), DQ([1]), DQ([1])],
     actuation_types=[
         SerialManipulatorSimulatorFriendly.ActuationType.RX,
         SerialManipulatorSimulatorFriendly.ActuationType.RY,

@@ -13,8 +13,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        # The same Python versions on every platform: the ones dqrobotics
+        # publishes wheels for (3.10-3.14 on Linux x86_64/aarch64, macOS arm64
+        # and Windows).
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    # macOS: the oldest macOS the wheel supports (the dqrobotics library that
+    # delocate bundles into it is built with the same target).
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
 
     steps:
       - uses: actions/checkout@v6
@@ -46,7 +54,10 @@ jobs:
           sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
 
       # ── macOS dependencies ──────────────────────────────────────
-      # (macOS is not in the matrix yet; kept for when it is added.)
+      # Eigen from Homebrew, and dqrobotics built from source (there is no
+      # Homebrew formula) and installed into the runner's temporary directory,
+      # which the build step passes to CMake. dqrobotics and this package use
+      # the same Eigen, since Eigen types cross their interface.
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -55,9 +66,11 @@ jobs:
           git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics/cpp
           cmake -S dqrobotics/cpp -B dqrobotics/cpp/build \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_PREFIX_PATH="$(brew --prefix)"
+                -DCMAKE_PREFIX_PATH="$(brew --prefix)" \
+                -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/dqrobotics"
           cmake --build dqrobotics/cpp/build -j
-          cmake --install dqrobotics/cpp/build --prefix /usr/local
+          cmake --install dqrobotics/cpp/build
+          echo "CMAKE_ARGS=-DCMAKE_PREFIX_PATH=$(brew --prefix);$RUNNER_TEMP/dqrobotics" >> "$GITHUB_ENV"
 
       # ── Windows dependencies ────────────────────────────────────
       # dqrobotics/cpp expects the vcpkg toolchain at C:/vcpkg.
@@ -95,7 +108,7 @@ jobs:
           pip install build
           python -m build --wheel
         env:
-          CMAKE_ARGS: ${{ runner.os == 'Windows' && '-DCMAKE_PREFIX_PATH=C:/dqrobotics' || '' }}
+          CMAKE_ARGS: ${{ runner.os == 'Windows' && '-DCMAKE_PREFIX_PATH=C:/dqrobotics' || env.CMAKE_ARGS }}
 
       # PyPI rejects wheels tagged `linux_x86_64`/`linux_aarch64` (it requires
       # a PEP 600 `manylinux` tag). auditwheel relinks/bundles as needed and
@@ -112,6 +125,41 @@ jobs:
           arch=$([[ "${{ matrix.os }}" == "ubuntu-latest" ]] && echo x86_64 || echo aarch64)
           auditwheel repair --plat auto -w dist/ dist/*linux_${arch}.whl
           rm -f dist/*linux_${arch}.whl
+
+      # macOS: bundle libdqrobotics.dylib into the wheel (as auditwheel does
+      # on Linux) and retag it for MACOSX_DEPLOYMENT_TARGET.
+      - name: Repair wheel (macOS, delocate)
+        if: runner.os == 'macOS'
+        run: |
+          pip install delocate
+          delocate-wheel -v -w dist/repaired dist/*.whl
+          rm -f dist/*.whl
+          mv dist/repaired/*.whl dist/
+          rmdir dist/repaired
+
+      # Install the wheel in a clean environment and use it. --no-deps: only
+      # papers.icra2019 needs marinholab-solvers-qpoases, whose wheels do not
+      # cover every platform and Python version; dqrobotics comes from its
+      # pre-releases, the ones with wheels for Python >= 3.10.
+      - name: Smoke test
+        shell: bash
+        run: |
+          python -m venv smoke
+          if [ "$RUNNER_OS" = "Windows" ]; then PY=smoke/Scripts/python; else PY=smoke/bin/python; fi
+          $PY -m pip install --upgrade pip
+          $PY -m pip install --pre dqrobotics numpy termcolor
+          $PY -m pip install --no-deps dist/*.whl
+          cd "$RUNNER_TEMP"
+          $GITHUB_WORKSPACE/$PY -c "
+          import numpy as np
+          from dqrobotics import DQ
+          from marinholab.sas.core import Clock, SerialManipulatorSimulatorFriendly as SM
+          arm = SM(offset_before=[DQ([1])] * 3, offset_after=[DQ([1])] * 3,
+                   actuation_types=[SM.ActuationType.RX, SM.ActuationType.RY, SM.ActuationType.RZ])
+          q = np.array([0.1, -0.2, 0.3])
+          assert np.shape(arm.raw_pose_jacobian(q, 2)) == (8, 3)
+          print(arm.raw_fkm(q, 2))
+          "
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v6
