@@ -71,6 +71,12 @@ jobs:
           cmake --build dqrobotics/cpp/build -j
           cmake --install dqrobotics/cpp/build
           echo "CMAKE_ARGS=-DCMAKE_PREFIX_PATH=$(brew --prefix);$RUNNER_TEMP/dqrobotics" >> "$GITHUB_ENV"
+          # The python.org Pythons of setup-python are universal2 builds, so
+          # setuptools would tag the wheel universal2; the extension and the
+          # dqrobotics it links are arm64 only. ARCHFLAGS makes setup.py pass
+          # the architecture to CMake, and _PYTHON_HOST_PLATFORM tags the wheel.
+          echo "ARCHFLAGS=-arch arm64" >> "$GITHUB_ENV"
+          echo "_PYTHON_HOST_PLATFORM=macosx-${MACOSX_DEPLOYMENT_TARGET}-arm64" >> "$GITHUB_ENV"
 
       # ── Windows dependencies ────────────────────────────────────
       # dqrobotics/cpp expects the vcpkg toolchain at C:/vcpkg.
