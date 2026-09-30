@@ -143,6 +143,20 @@ jobs:
           mv dist/repaired/*.whl dist/
           rmdir dist/repaired
 
+      # Windows: bundle dqrobotics.dll into the wheel (as auditwheel and
+      # delocate do on Linux and macOS). Without it, importing _core fails
+      # with "DLL load failed while importing _core" wherever dqrobotics.dll
+      # is not on the DLL search path, i.e. on every user's machine.
+      - name: Repair wheel (Windows, delvewheel)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          pip install delvewheel
+          delvewheel repair --add-path "C:/dqrobotics/bin" -w dist/repaired dist/*.whl
+          rm -f dist/*.whl
+          mv dist/repaired/*.whl dist/
+          rmdir dist/repaired
+
       # Install the wheel in a clean environment and use it. --no-deps: only
       # papers.icra2019 needs marinholab-solvers-qpoases, whose wheels do not
       # cover every platform and Python version; dqrobotics comes from its
