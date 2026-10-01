@@ -46,8 +46,15 @@ sas_core_clock_example = "marinholab.sas.core.example_clock:main"
 sas_core_clock_sched_fifo_example = "marinholab.sas.core.example_clock_sched_fifo:main"
 sas_core_robot_driver_subclass_example = "marinholab.sas.core.example_robot_driver_subclass:main"
 
+# `marinholab` and `marinholab.sas` are PEP 420 namespace packages (no
+# __init__.py), shared with other distributions such as
+# marinholab-solvers-qpoases (marinholab.solvers) and marinholab-ur3e-r820
+# (marinholab.ur3e_r820). An __init__.py in either would make it a regular
+# package and hide the others' subpackages. `namespaces` (true by default)
+# makes find include them.
 [tool.setuptools.packages.find]
 include = ["marinholab*"]
+namespaces = true
 
 [tool.setuptools.package-data]
 "marinholab.sas.core" = ["py.typed", "*.pyi"]

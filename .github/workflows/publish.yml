@@ -122,6 +122,17 @@ jobs:
           assert np.allclose(arm.pose_jacobian(q), arm.raw_pose_jacobian(q, 2))
           print(arm.fkm(q))
           "
+          # marinholab and marinholab.sas must stay namespace packages (no
+          # __init__.py), or they hide the marinholab.* packages of other
+          # distributions (marinholab-solvers-qpoases, marinholab-ur3e-r820).
+          mkdir -p other/marinholab/other_package
+          echo "VALUE = 1" > other/marinholab/other_package/__init__.py
+          PYTHONPATH=other $GITHUB_WORKSPACE/$PY -c "
+          import marinholab, marinholab.sas, marinholab.sas.core, marinholab.other_package
+          assert getattr(marinholab, '__file__', None) is None, marinholab.__file__
+          assert getattr(marinholab.sas, '__file__', None) is None, marinholab.sas.__file__
+          print('namespace packages OK')
+          "
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v6
