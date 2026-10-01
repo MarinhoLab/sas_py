@@ -19,8 +19,7 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
-    # macOS: the oldest macOS the wheel supports (the dqrobotics library that
-    # delocate bundles into it is built with the same target).
+    # macOS: the oldest macOS the wheel supports.
     env:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
 
@@ -39,47 +38,31 @@ jobs:
           cache: 'pip'
 
       # ── Ubuntu dependencies ─────────────────────────────────────
-      # libdqrobotics comes from the DQ Robotics PPA; patchelf is a native
+      # dqrobotics is built from the submodules/dqrobotics_cpp submodule as
+      # part of the wheel, so only Eigen is needed. patchelf is a native
       # prerequisite of `auditwheel repair` below.
       - name: Install system dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential patchelf
-          sudo apt-get install -y libeigen3-dev
-          sudo add-apt-repository -y ppa:dqrobotics-dev/development
-          sudo apt-get update
-          sudo apt-get install -y libdqrobotics
-          # dqrobotics headers use <Eigen/Dense> without the eigen3/ prefix:
-          sudo ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
+          sudo apt-get install -y build-essential patchelf libeigen3-dev
 
       # ── macOS dependencies ──────────────────────────────────────
-      # Eigen from Homebrew, and dqrobotics built from source (there is no
-      # Homebrew formula) and installed into the runner's temporary directory,
-      # which the build step passes to CMake. dqrobotics and this package use
-      # the same Eigen, since Eigen types cross their interface.
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update
           brew install eigen
-          git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics/cpp
-          cmake -S dqrobotics/cpp -B dqrobotics/cpp/build \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_PREFIX_PATH="$(brew --prefix)" \
-                -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/dqrobotics"
-          cmake --build dqrobotics/cpp/build -j
-          cmake --install dqrobotics/cpp/build
-          echo "CMAKE_ARGS=-DCMAKE_PREFIX_PATH=$(brew --prefix);$RUNNER_TEMP/dqrobotics" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS=-DCMAKE_PREFIX_PATH=$(brew --prefix)" >> "$GITHUB_ENV"
           # The python.org Pythons of setup-python are universal2 builds, so
-          # setuptools would tag the wheel universal2; the extension and the
-          # dqrobotics it links are arm64 only. ARCHFLAGS makes setup.py pass
-          # the architecture to CMake, and _PYTHON_HOST_PLATFORM tags the wheel.
+          # setuptools would tag the wheel universal2; the extension is built
+          # for arm64 only. ARCHFLAGS makes setup.py pass the architecture to
+          # CMake, and _PYTHON_HOST_PLATFORM tags the wheel.
           echo "ARCHFLAGS=-arch arm64" >> "$GITHUB_ENV"
           echo "_PYTHON_HOST_PLATFORM=macosx-${MACOSX_DEPLOYMENT_TARGET}-arm64" >> "$GITHUB_ENV"
 
       # ── Windows dependencies ────────────────────────────────────
-      # dqrobotics/cpp expects the vcpkg toolchain at C:/vcpkg.
+      # Eigen from vcpkg; CMakeLists.txt uses the vcpkg toolchain at C:/vcpkg.
       - name: Install vcpkg at C:/vcpkg
         if: runner.os == 'Windows'
         run: |
@@ -87,38 +70,18 @@ jobs:
           C:/vcpkg/./bootstrap-vcpkg.bat
           C:/vcpkg/./vcpkg install eigen3:x64-windows
 
-      - name: Build & install dqrobotics (Windows)
-        if: runner.os == 'Windows'
-        # '^' line-continuation is cmd.exe syntax (the default runner shell
-        # is pwsh, where it would be passed literally to cmake).
-        shell: cmd
-        run: |
-          :: Use the DEFAULT (Visual Studio / MSVC) generator so dqrobotics is
-          :: built with cl.exe, the same compiler the wheel uses. Do NOT use
-          :: -G Ninja here: on this runner Ninja picks the pre-installed MinGW
-          :: g++ and produces a libdqrobotics.dll.a that MSVC cannot link.
-          git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics\cpp
-          cmake -S dqrobotics\cpp -B dqrobotics\cpp\build ^
-                -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^
-                -DVCPKG_TARGET_TRIPLET=x64-windows ^
-                -DCMAKE_INSTALL_PREFIX=C:\dqrobotics
-          cmake --build dqrobotics\cpp\build --config Release -j
-          cmake --install dqrobotics\cpp\build --config Release
-
-      # ── Build ───────────────────────────────────────────────────
-      # On Windows, point sas_cpp's dqrobotics lookup at C:/dqrobotics.
+      # ── Build ──────────────────────────────────────────────────
       # setup.py forwards CMAKE_ARGS to the CMake configure step.
       - name: Build wheel
         run: |
           python -m pip install --upgrade pip
           pip install build
           python -m build --wheel
-        env:
-          CMAKE_ARGS: ${{ runner.os == 'Windows' && '-DCMAKE_PREFIX_PATH=C:/dqrobotics' || env.CMAKE_ARGS }}
 
       # PyPI rejects wheels tagged `linux_x86_64`/`linux_aarch64` (it requires
-      # a PEP 600 `manylinux` tag). auditwheel relinks/bundles as needed and
-      # retags the wheel.
+      # a PEP 600 `manylinux` tag). auditwheel checks the wheel's external
+      # dependencies (only system libraries: dqrobotics is linked statically)
+      # and retags it. macOS and Windows wheels need no repair.
       # - `--plat auto` picks the tightest compatible manylinux tag from the
       #   wheel's actual symbols (the ubuntu-latest glibc varies, so do not
       #   hardcode a `manylinux_2_X` tag).
@@ -131,31 +94,6 @@ jobs:
           arch=$([[ "${{ matrix.os }}" == "ubuntu-latest" ]] && echo x86_64 || echo aarch64)
           auditwheel repair --plat auto -w dist/ dist/*linux_${arch}.whl
           rm -f dist/*linux_${arch}.whl
-
-      # macOS: bundle libdqrobotics.dylib into the wheel (as auditwheel does
-      # on Linux) and retag it for MACOSX_DEPLOYMENT_TARGET.
-      - name: Repair wheel (macOS, delocate)
-        if: runner.os == 'macOS'
-        run: |
-          pip install delocate
-          delocate-wheel -v -w dist/repaired dist/*.whl
-          rm -f dist/*.whl
-          mv dist/repaired/*.whl dist/
-          rmdir dist/repaired
-
-      # Windows: bundle dqrobotics.dll into the wheel (as auditwheel and
-      # delocate do on Linux and macOS). Without it, importing _core fails
-      # with "DLL load failed while importing _core" wherever dqrobotics.dll
-      # is not on the DLL search path, i.e. on every user's machine.
-      - name: Repair wheel (Windows, delvewheel)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          pip install delvewheel
-          delvewheel repair --add-path "C:/dqrobotics/bin" -w dist/repaired dist/*.whl
-          rm -f dist/*.whl
-          mv dist/repaired/*.whl dist/
-          rmdir dist/repaired
 
       # Install the wheel in a clean environment and use it. --no-deps: only
       # papers.icra2019 needs marinholab-solvers-qpoases, whose wheels do not
@@ -178,7 +116,11 @@ jobs:
                    actuation_types=[SM.ActuationType.RX, SM.ActuationType.RY, SM.ActuationType.RZ])
           q = np.array([0.1, -0.2, 0.3])
           assert np.shape(arm.raw_pose_jacobian(q, 2)) == (8, 3)
-          print(arm.raw_fkm(q, 2))
+          # Inherited DQ_SerialManipulator methods run in the dqrobotics
+          # package's own copy of the library, on an object built by _core.
+          assert arm.fkm(q) == arm.raw_fkm(q, 2)
+          assert np.allclose(arm.pose_jacobian(q), arm.raw_pose_jacobian(q, 2))
+          print(arm.fkm(q))
           "
 
       - name: Upload wheel artifact
