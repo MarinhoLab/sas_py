@@ -23,13 +23,18 @@
   - `example_*.py` — example scripts (also installed as commands).
 - `src/` — the C++ binding sources (ported from `SmartArmStack/sas_core`).
 - `submodules/sas_cpp` — the C++ core (git submodule, consumed via CMake).
+- `submodules/dqrobotics_cpp` — the dqrobotics C++ library (git submodule,
+  pinned to the commit the required `dqrobotics` Python release is built from).
 - `submodules/pybind11` — pybind11 (git submodule, pinned to v3.0.4).
 - `docker/` — `ubuntu:noble` build environment and full test pipeline.
 
-The C++ core depends on **Eigen3** and **dqrobotics** (the latter is located
-by CMake at build time; on Debian/Ubuntu it comes from the DQ Robotics PPA).
-The Python package additionally depends on the `dqrobotics` Python package,
-which registers the dual-quaternion types the bindings expose.
+The C++ core depends on **Eigen3** and **dqrobotics**. dqrobotics is compiled
+from the `submodules/dqrobotics_cpp` submodule and linked statically into the
+extension module, together with the C++ core, so no dqrobotics library needs
+to be installed. The Python package additionally depends on the `dqrobotics`
+Python package, which registers the dual-quaternion and robot-model types the
+bindings expose (pybind11 shares them between the two extension modules, so
+the submodule is kept at the same dqrobotics/cpp commit as that release).
 
 ## Installation
 
@@ -51,28 +56,22 @@ cd sas_py
 pip install . --no-build-isolation
 ```
 
-Building requires `cmake` (>= 3.16), `ninja`, a C++17 compiler, Eigen3, and
-`dqrobotics`. On Debian/Ubuntu:
+Building requires `cmake` (>= 3.16), `ninja`, a C++17 compiler and Eigen3.
+On Debian/Ubuntu:
 
 ```bash
 sudo apt install build-essential g++ cmake ninja-build python3-dev libeigen3-dev
-# dqrobotics from the DQ Robotics PPA:
-sudo add-apt-repository -y ppa:dqrobotics-dev/development
-sudo apt install libdqrobotics
 ```
 
-On macOS, Eigen comes from Homebrew and `dqrobotics` is built from source
-(there is no Homebrew formula), with the same Eigen:
+On macOS, with Eigen from Homebrew:
 
 ```bash
 brew install eigen cmake ninja
-git clone --depth 1 https://github.com/dqrobotics/cpp.git dqrobotics-cpp
-cmake -S dqrobotics-cpp -B dqrobotics-cpp/build -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_PREFIX_PATH="$(brew --prefix)" -DCMAKE_INSTALL_PREFIX="$HOME/.local/dqrobotics"
-cmake --build dqrobotics-cpp/build -j && cmake --install dqrobotics-cpp/build
-CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix);$HOME/.local/dqrobotics" \
-    pip install . --no-build-isolation
+CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix)" pip install . --no-build-isolation
 ```
+
+On Windows, Eigen comes from vcpkg, expected at `C:/vcpkg`
+(`vcpkg install eigen3:x64-windows`).
 
 ## Usage
 

@@ -62,6 +62,25 @@ assert max_err < 1e-6, f"Jacobian/FDM mismatch: {max_err}"
 assert np.allclose(m.get_lower_q_limit(), -10.0)
 assert np.allclose(m.get_upper_q_limit(), 10.0)
 
+# dqrobotics interop: _core links its own static copy of dqrobotics, while
+# DQ and DQ_SerialManipulator are the `dqrobotics` package's Python types.
+# Methods inherited from DQ_SerialManipulator run in the dqrobotics package's
+# copy, on an object built by _core, and dqrobotics' functions accept it.
+from dqrobotics import i_, k_, E_
+from dqrobotics.robot_modeling import DQ_Kinematics
+x = m.fkm(q)
+assert isinstance(x, DQ) and x == m.raw_fkm(q, 2), x
+Jx = m.pose_jacobian(q)
+assert np.allclose(Jx, J), "fkm/pose_jacobian via dqrobotics differ from raw_*"
+assert m.get_dim_configuration_space() == 3
+base = 1 + 0.5 * E_ * k_
+m.set_base_frame(base)
+m.set_reference_frame(base)
+assert m.get_base_frame() == base
+assert np.allclose(m.fkm(q).vec8(), (base * m.raw_fkm(q, 2)).vec8())
+Jt = DQ_Kinematics.translation_jacobian(m.pose_jacobian(q), m.fkm(q))
+assert Jt.shape == (4, 3), Jt.shape
+
 print("import + API OK (incl. modeling, FD Jacobian err=%.2e)" % max_err)
 EOF
 
@@ -69,6 +88,14 @@ echo "=== Running example scripts ==="
 sas_core_clock_example
 sas_core_clock_sched_fifo_example
 sas_core_robot_driver_subclass_example
+
+echo "=== _core links no dqrobotics shared library ==="
+core_so=$(python3 -c "import marinholab.sas.core._core as c; print(c.__file__)")
+ldd "$core_so"
+if ldd "$core_so" | grep -qi dqrobotics; then
+    echo "_core depends on a dqrobotics shared library" >&2
+    exit 1
+fi
 
 echo "=== Verify installed files ==="
 python3 - <<'EOF'
