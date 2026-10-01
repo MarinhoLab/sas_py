@@ -35,6 +35,9 @@
 namespace marinholab::sas::core
 {
 
+// The sas_cpp headers no longer bring Eigen's names into scope.
+using Eigen::VectorXd;
+
 //https://pybind11.readthedocs.io/en/stable/advanced/classes.html
 //Trampoline class
 class RobotDriverPy: public RobotDriver, public py::trampoline_self_life_support
