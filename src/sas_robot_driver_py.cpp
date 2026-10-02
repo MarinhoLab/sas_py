@@ -22,6 +22,9 @@
 #
 # #################################################################
 # Contributors:
+#
+#   1. Erwin Lopez (erwin.lopez@manchester.ac.uk)
+#      Added bindings for tool gpio
 #*/
 
 /**
@@ -129,6 +132,27 @@ public:
         );
     }
 
+    std::array<bool, 2> get_tool_gpio() override
+    {
+        // The return type contains a comma, so it must be wrapped in
+        // PYBIND11_TYPE(...) to keep the macro's argument list intact.
+        PYBIND11_OVERRIDE(
+        PYBIND11_TYPE(std::array<bool, 2>),
+        RobotDriver,
+        get_tool_gpio,
+        );
+    }
+
+    void set_tool_gpio(const std::array<bool, 2>& tool_gpio) override
+    {
+        PYBIND11_OVERRIDE(
+        void,
+        RobotDriver,
+        set_tool_gpio,
+        tool_gpio
+        );
+    }
+
     void connect() override
     {
         PYBIND11_OVERRIDE_PURE(
@@ -187,6 +211,9 @@ void init_sas_robot_driver_py(py::module_& m)
 
     c.def("get_joint_limits", &RobotDriver::get_joint_limits, "");
     c.def("set_joint_limits", &RobotDriver::set_joint_limits, "");
+
+    c.def("get_tool_gpio", &RobotDriver::get_tool_gpio, "");
+    c.def("set_tool_gpio", &RobotDriver::set_tool_gpio, "");
 
     c.def("watchdog_start", &RobotDriver::watchdog_start, "");
     c.def("watchdog_trigger", &RobotDriver::watchdog_trigger, "");
