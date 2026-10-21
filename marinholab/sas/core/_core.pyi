@@ -70,12 +70,12 @@ class Clock:
         """Get the configured sampling interval in seconds."""
         ...
 
-    def safe_sleep_seconds(self, seconds: float, break_loop: Optional[object]) -> None:
+    def safe_sleep_seconds(self, seconds: float, shutdown_signaler: ShutdownSignaler) -> None:
         """Sleep for approximately the given duration while allowing early exit.
 
         :param seconds: Duration in seconds to sleep.
-        :param break_loop: Optional pointer to an atomic boolean used to
-            interrupt the sleep early.
+        :param shutdown_signaler: Sleep ends early once its
+            ``should_shutdown()`` is True.
         """
         ...
 

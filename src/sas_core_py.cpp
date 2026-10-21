@@ -81,7 +81,7 @@ Callers must wait on `should_shutdown()` to observe the change.)pbdoc");
     clock.def("init", &C::init, R"pbdoc(@brief Initialize the clock internal state and timers.
 
 Call once before using the clock to set the initial reference time.)pbdoc");
-    clock.def("update_and_sleep", &C::update_and_sleep, R"pbdoc(@brief Update internal timing measurements and sleep to respect the target sampling time.
+    clock.def("update_and_sleep", &C::update_and_sleep, py::call_guard<py::gil_scoped_release>(), R"pbdoc(@brief Update internal timing measurements and sleep to respect the target sampling time.
 
 This records the computation time since the last update, computes the next
 deadline and sleeps until that deadline. If statistics collection is enabled
@@ -95,11 +95,19 @@ the internal statistics are updated.)pbdoc");
 
     // std::chrono time points are not bound to Python here (returned types are C++ types)
 
-    clock.def("safe_sleep_seconds", &C::safe_sleep_seconds, R"pbdoc(@brief Sleep for approximately the given duration while allowing early exit.
+    clock.def("safe_sleep_seconds",
+              [](C &self, const double &seconds, SS &shutdown_signaler) {
+                  self.safe_sleep_seconds(seconds, &shutdown_signaler);
+              },
+              py::arg("seconds"), py::arg("shutdown_signaler"),
+              py::call_guard<py::gil_scoped_release>(),
+              R"pbdoc(@brief Sleep for approximately the given duration while allowing early exit.
+
+The GIL is released while sleeping.
 
 @param seconds Duration in seconds to sleep.
-@param break_loop Optional pointer to an atomic boolean (C++ side) used to interrupt the sleep early. If `None` is passed from Python it will behave as a blocking sleep loop.)pbdoc");
-    clock.def("blocking_sleep_seconds", &C::blocking_sleep_seconds, R"pbdoc(@brief Block the calling thread for the specified duration (no early exit).
+@param shutdown_signaler A ShutdownSignaler; the sleep ends early once `should_shutdown()` is True.)pbdoc");
+    clock.def("blocking_sleep_seconds", &C::blocking_sleep_seconds, py::call_guard<py::gil_scoped_release>(), R"pbdoc(@brief Block the calling thread for the specified duration (no early exit).
 
 @param seconds Duration in seconds to block.)pbdoc");
 
