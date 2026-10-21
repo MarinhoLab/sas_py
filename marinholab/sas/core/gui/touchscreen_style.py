@@ -46,15 +46,29 @@ QLabel#connectionLabel {
     background-color: #251c4d;
     border: 2px solid #40347a;
 }
-QLabel#connectionLabel[state="ready"] {
+/* Shared status colours for the pill labels: amber (waiting/moving, also the default of the
+   polisher and force-sensor pills) and green (ready/connected). */
+QLabel#connectionLabel[state="moving"], QLabel#polisherConnectionLabel, QLabel#forceSensorLabel {
+    color: #fbbf24;
+    background-color: #422006;
+    border-color: #92400e;
+}
+QLabel#connectionLabel[state="ready"], QLabel#polisherConnectionLabel[state="connected"],
+QLabel#forceSensorLabel[state="connected"] {
     color: #4ade80;
     background-color: #052e16;
     border-color: #166534;
 }
-QLabel#connectionLabel[state="moving"] {
+QLabel#polisherConnectionLabel, QLabel#forceSensorLabel {
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid #92400e;
+    border-radius: 12px;
+}
+QLabel#jogHintLabel[state="warning"], QLabel#polisherHintLabel[state="warning"],
+QLabel#forceHintLabel[state="warning"], QLabel#errorLabel[state="warning"],
+QLabel#forceValueLabel[state="high"] {
     color: #fbbf24;
-    background-color: #422006;
-    border-color: #92400e;
 }
 
 QPushButton {
@@ -134,6 +148,30 @@ QLabel#polisherCaption {
     border-bottom: 3px solid #a855f7;
 }
 
+/* Rules shared by the polisher and force panels and the jog pad. */
+QFrame#polisherPanel, QFrame#forcePanel {
+    background-color: #1d1042;
+    border: 1px solid #6b34b8;
+    border-radius: 20px;
+}
+QLabel#jogTitleLabel, QLabel#polisherControlTitleLabel, QLabel#forceTitleLabel {
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: transparent;
+}
+QLabel#jogOffsetLabel, QLabel#jogStepLabel, QLabel#jogHintLabel,
+QLabel#jogTranslateLabel, QLabel#jogRotateLabel,
+QLabel#polisherPowerLabel, QLabel#polisherSpeedLabel, QLabel#polisherHintLabel,
+QLabel#forceValueLabel, QLabel#forceHintLabel {
+    color: #aaa5d6;
+    background: transparent;
+}
+QPushButton[role="jog"], QPushButton[role="jogStep"],
+QPushButton#polisherSpeedDownButton, QPushButton#polisherSpeedUpButton,
+QPushButton#forceResetPeakButton {
+    border-radius: 14px;
+}
+
 /* Fine-adjustment pad, inside the microscope section. */
 QFrame#jogPanel {
     background-color: #150f3a;
@@ -145,19 +183,11 @@ QFrame#jogPanel[state="enabled"] {
 }
 QLabel#jogTitleLabel {
     font-size: 15pt;
-    font-weight: 700;
-    letter-spacing: 2px;
     color: #a5b4fc;
-    background: transparent;
 }
 QLabel#jogOffsetLabel, QLabel#jogStepLabel, QLabel#jogHintLabel,
 QLabel#jogTranslateLabel, QLabel#jogRotateLabel {
     font-size: 12pt;
-    color: #aaa5d6;
-    background: transparent;
-}
-QLabel#jogHintLabel[state="warning"] {
-    color: #fbbf24;
 }
 QLabel#jogTranslateXLabel, QLabel#jogTranslateYLabel, QLabel#jogTranslateZLabel,
 QLabel#jogRotateXLabel, QLabel#jogRotateYLabel, QLabel#jogRotateZLabel {
@@ -169,7 +199,6 @@ QLabel#jogRotateXLabel, QLabel#jogRotateYLabel, QLabel#jogRotateZLabel {
 }
 QPushButton[role="jog"] {
     font-size: 24pt;
-    border-radius: 14px;
     padding: 4px;
 }
 QPushButton[role="jogStep"] {
@@ -178,7 +207,6 @@ QPushButton[role="jogStep"] {
     color: #d4cff3;
     background-color: #191340;
     border: 2px solid #2f3fa8;
-    border-radius: 14px;
     padding: 8px 12px;
     min-height: 28px;
 }
@@ -189,43 +217,19 @@ QPushButton[role="jogStep"][state="selected"] {
 }
 
 /* Polisher control panel, inside the polisher section (see polisher_panel.py). */
-QFrame#polisherPanel {
-    background-color: #1d1042;
-    border: 1px solid #6b34b8;
-    border-radius: 20px;
-}
 QFrame#polisherPanel[state="on"] {
     border-color: #a855f7;
 }
 QLabel#polisherControlTitleLabel {
     font-size: 15pt;
-    font-weight: 700;
-    letter-spacing: 2px;
     color: #d8b4fe;
-    background: transparent;
 }
 QLabel#polisherConnectionLabel {
     font-size: 11pt;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #fbbf24;
-    background-color: #422006;
-    border: 1px solid #92400e;
-    border-radius: 12px;
     padding: 4px 12px;
-}
-QLabel#polisherConnectionLabel[state="connected"] {
-    color: #4ade80;
-    background-color: #052e16;
-    border-color: #166534;
 }
 QLabel#polisherPowerLabel, QLabel#polisherSpeedLabel, QLabel#polisherHintLabel {
     font-size: 12pt;
-    color: #aaa5d6;
-    background: transparent;
-}
-QLabel#polisherHintLabel[state="warning"] {
-    color: #fbbf24;
 }
 QPushButton#polisherPowerButton {
     font-size: 24pt;
@@ -239,64 +243,33 @@ QPushButton#polisherPowerButton:checked {
 }
 QPushButton#polisherSpeedDownButton, QPushButton#polisherSpeedUpButton {
     font-size: 22pt;
-    border-radius: 14px;
     padding: 2px;
 }
 
 /* Force column on the right (see force_panel.py). ForceBar paints itself; only the labels
    around it are styled. */
-QFrame#forcePanel {
-    background-color: #1d1042;
-    border: 1px solid #6b34b8;
-    border-radius: 20px;
-}
 QLabel#forceTitleLabel {
     font-size: 14pt;
-    font-weight: 700;
-    letter-spacing: 2px;
     color: #d8b4fe;
-    background: transparent;
 }
 QLabel#forceValueLabel {
     font-size: 17pt;
     font-weight: 700;
-    color: #aaa5d6;
-    background: transparent;
 }
 QLabel#forceValueLabel[state="ok"] {
     color: #d8b4fe;
 }
-QLabel#forceValueLabel[state="high"] {
-    color: #fbbf24;
-}
 QLabel#forceSensorLabel {
     font-size: 10pt;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #fbbf24;
-    background-color: #422006;
-    border: 1px solid #92400e;
-    border-radius: 12px;
     padding: 4px 10px;
-}
-QLabel#forceSensorLabel[state="connected"] {
-    color: #4ade80;
-    background-color: #052e16;
-    border-color: #166534;
 }
 QLabel#forceHintLabel {
     font-size: 11pt;
-    color: #aaa5d6;
-    background: transparent;
-}
-QLabel#forceHintLabel[state="warning"] {
-    color: #fbbf24;
 }
 QPushButton#forceResetPeakButton {
     font-size: 12pt;
     font-weight: 700;
     letter-spacing: 1px;
-    border-radius: 14px;
     padding: 4px;
 }
 
@@ -336,9 +309,6 @@ QProgressBar[state="reached"]::chunk {
 }
 QProgressBar[state="short"]::chunk {
     background-color: #d97706;
-}
-QLabel#errorLabel[state="warning"] {
-    color: #fbbf24;
 }
 """
 
