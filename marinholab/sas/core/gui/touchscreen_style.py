@@ -9,6 +9,8 @@ You should have received a copy of the GNU General Public License along with thi
 see <https://www.gnu.org/licenses/>.
 """
 
+from .common_style import COMMON_STYLE_SHEET
+
 # Qt style sheet for the touchscreen GUI: a dark indigo/violet, high-contrast theme with large
 # touch targets.
 #
@@ -20,50 +22,16 @@ see <https://www.gnu.org/licenses/>.
 #   - `errorLabel`, `jogHintLabel`, `polisherHintLabel`: "warning".
 #   - `polisherConnectionLabel`: "" (not connected) or "connected".
 #   - `polisherPanel`: "" or "on".
-STYLE_SHEET = """
-QMainWindow, QWidget#centralwidget {
-    background-color: #120d2b;
-}
-
-QLabel {
-    color: #ece9ff;
-}
-
+STYLE_SHEET = COMMON_STYLE_SHEET + """
 QLabel#titleLabel {
     font-size: 28pt;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #faf9ff;
 }
 
 QLabel#connectionLabel {
     font-size: 13pt;
-    font-weight: 600;
     padding: 8px 20px;
     border-radius: 18px;
     min-width: 120px;
-    color: #aaa5d6;
-    background-color: #251c4d;
-    border: 2px solid #40347a;
-}
-/* Shared status colours for the pill labels: amber (waiting/moving, also the default of the
-   polisher and force-sensor pills) and green (ready/connected). */
-QLabel#connectionLabel[state="moving"], QLabel#polisherConnectionLabel, QLabel#forceSensorLabel {
-    color: #fbbf24;
-    background-color: #422006;
-    border-color: #92400e;
-}
-QLabel#connectionLabel[state="ready"], QLabel#polisherConnectionLabel[state="connected"],
-QLabel#forceSensorLabel[state="connected"] {
-    color: #4ade80;
-    background-color: #052e16;
-    border-color: #166534;
-}
-QLabel#polisherConnectionLabel, QLabel#forceSensorLabel {
-    font-weight: 700;
-    letter-spacing: 1px;
-    border: 1px solid #92400e;
-    border-radius: 12px;
 }
 QLabel#jogHintLabel[state="warning"], QLabel#polisherHintLabel[state="warning"],
 QLabel#forceHintLabel[state="warning"], QLabel#errorLabel[state="warning"],
@@ -73,21 +41,8 @@ QLabel#forceValueLabel[state="high"] {
 
 QPushButton {
     font-size: 22pt;
-    font-weight: 600;
-    color: #f4f2ff;
-    background-color: #251c4d;
-    border: 2px solid #40347a;
     border-radius: 20px;
     padding: 16px;
-}
-QPushButton:pressed {
-    background-color: #4f46e5;
-    border-color: #6366f1;
-}
-QPushButton:disabled {
-    color: #6a62a3;
-    background-color: #191340;
-    border-color: #251c4d;
 }
 QPushButton[state="active"], QPushButton[state="active"]:disabled {
     color: #ffffff;
@@ -119,33 +74,15 @@ QPushButton[state="reached"]:disabled {
     border-color: #166534;
 }
 
-/* Station sections group the illustration with that station's buttons. They are flat, tinted
-   areas (no raised border or bevel) so they do not read as buttons themselves. */
-QFrame#microscopeSection {
-    background-color: #141d4d;
-    border: 1px solid #2f3fa8;
-    border-radius: 28px;
-}
-QFrame#polisherSection {
-    background-color: #27144d;
-    border: 1px solid #6b34b8;
-    border-radius: 28px;
-}
-
 QLabel#microscopeCaption, QLabel#polisherCaption {
     font-size: 20pt;
-    font-weight: 700;
-    letter-spacing: 3px;
     padding: 0px 4px 8px 4px;
-    background: transparent;
 }
-QLabel#microscopeCaption {
-    color: #a5b4fc;
-    border-bottom: 3px solid #6366f1;
+QLabel#statusLabel {
+    font-size: 17pt;
 }
-QLabel#polisherCaption {
-    color: #d8b4fe;
-    border-bottom: 3px solid #a855f7;
+QLabel#errorLabel {
+    font-size: 13pt;
 }
 
 /* Rules shared by the polisher and force panels and the jog pad. */
@@ -271,23 +208,6 @@ QPushButton#forceResetPeakButton {
     font-weight: 700;
     letter-spacing: 1px;
     padding: 4px;
-}
-
-QFrame#statusFrame {
-    background-color: #251c4d;
-    border: 2px solid #40347a;
-    border-radius: 20px;
-}
-
-QLabel#statusLabel {
-    font-size: 17pt;
-    font-weight: 600;
-    color: #f4f2ff;
-}
-
-QLabel#errorLabel {
-    font-size: 13pt;
-    color: #aaa5d6;
 }
 
 QProgressBar {
