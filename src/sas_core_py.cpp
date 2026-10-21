@@ -96,8 +96,8 @@ the internal statistics are updated.)pbdoc");
     // std::chrono time points are not bound to Python here (returned types are C++ types)
 
     clock.def("safe_sleep_seconds",
-              [](C &self, const double &seconds, SS &shutdown_signaler) {
-                  self.safe_sleep_seconds(seconds, &shutdown_signaler);
+              [](C &self, const double &seconds, const std::shared_ptr<SS> &shutdown_signaler) {
+                  self.safe_sleep_seconds(seconds, shutdown_signaler);
               },
               py::arg("seconds"), py::arg("shutdown_signaler"),
               py::call_guard<py::gil_scoped_release>(),
