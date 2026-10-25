@@ -16,7 +16,7 @@ jobs:
         # The same Python versions on every platform: the ones dqrobotics
         # publishes wheels for (3.10-3.14 on Linux x86_64/aarch64, macOS arm64
         # and Windows).
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     # macOS: the oldest macOS the wheel supports.
