@@ -90,10 +90,10 @@ jobs:
       - name: Repair wheel (Linux, manylinux tag)
         if: runner.os == 'Linux'
         run: |
-          pip install auditwheel
-          arch=$([[ "${{ matrix.os }}" == "ubuntu-latest" ]] && echo x86_64 || echo aarch64)
-          auditwheel repair --plat auto -w dist/ dist/*linux_${arch}.whl
-          rm -f dist/*linux_${arch}.whl
+          pip install auditwheel         
+          auditwheel repair --plat auto -w dist/ dist/*-linux_*.whl
+          rm -f dist/*-linux_*.whl
+          ls dist/    # exactly one wheel per (os, python) leg: what upload/PyPI see
 
       # Install the wheel in a clean environment and use it. --no-deps: only
       # papers.icra2019 needs marinholab-solvers-qpoases, whose wheels do not
