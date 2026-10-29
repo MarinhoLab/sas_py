@@ -32,6 +32,7 @@ methods. It is intended for documentation and testing purposes only.
 """
 
 import numpy as np
+
 from marinholab.sas.core import RobotDriver, ShutdownSignaler
 
 

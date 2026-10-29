@@ -25,19 +25,18 @@
 Task-space controller with remote-centre-of-motion (RCM) and joint-limit
 constraints, implemented as a quadratic program over joint velocities.
 """
-from typing import Optional, Sequence, Tuple
-
-from dqrobotics.robot_modeling import DQ_Kinematics, DQ_SerialManipulator
-from dqrobotics.utils import DQ_Geometry
-from dqrobotics import *
-from marinholab.solvers.qpoases import Solver
+from collections.abc import Sequence
 
 import numpy as np
+from dqrobotics import *
+from dqrobotics.robot_modeling import DQ_Kinematics, DQ_SerialManipulator
+from dqrobotics.utils import DQ_Geometry
 
 from marinholab.sas.core.papers.icra2019._debug import (
     debug_rcm,
     normalize_verbose,
 )
+from marinholab.solvers.qpoases import Solver
 
 
 class Controller:
@@ -54,7 +53,7 @@ class Controller:
                  gain: float,
                  damping: float,
                  alpha: float,
-                 rcm_constraints: Sequence[Tuple[DQ, float, int]],
+                 rcm_constraints: Sequence[tuple[DQ, float, int]],
                  vfi_gain: float = 2.0,
                  **kwargs) -> None:
         """
@@ -77,7 +76,7 @@ class Controller:
         self.gain: float = gain
         self.damping: float = damping
         self.alpha: float = alpha
-        self.rcm_constraints: Sequence[Tuple[DQ, float, int]] = rcm_constraints
+        self.rcm_constraints: Sequence[tuple[DQ, float, int]] = rcm_constraints
         self.vfi_gain: float = vfi_gain
         self.er_accumulated: np.ndarray = np.zeros((4,))
         self.et_accumulated: np.ndarray = np.zeros((4,))
@@ -86,9 +85,9 @@ class Controller:
         self.verbose = normalize_verbose(kwargs.get("verbose", False))
 
         # Pose / Jacobian / task error of the last control step.
-        self.last_x: Optional[DQ] = None
-        self.last_Jx: Optional[np.ndarray] = None
-        self.last_error: Optional[np.ndarray] = None
+        self.last_x: DQ | None = None
+        self.last_Jx: np.ndarray | None = None
+        self.last_error: np.ndarray | None = None
 
     def get_last_robot_pose(self) -> DQ:
         """
@@ -102,7 +101,7 @@ class Controller:
         assert self.last_x is not None, "No control step has been computed yet."
         return self.last_x
 
-    def get_last_error(self) -> Optional[np.ndarray]:
+    def get_last_error(self) -> np.ndarray | None:
         """Return the task error of the last control step, if any.
 
         :return: The stacked translation/rotation error vector of the last
@@ -118,7 +117,7 @@ class Controller:
                            p: DQ,
                            d_safe: float,
                            eta_d: float,
-                           ) -> Tuple[np.ndarray, np.ndarray]:
+                           ) -> tuple[np.ndarray, np.ndarray]:
         """
         This static method computes the Remote Centre of Motion (RCM) constraint
         for the end-effector represented by x and its Jacobian Jx. It calculates the
@@ -170,7 +169,7 @@ class Controller:
         self,
         q: np.ndarray,
         xd: DQ,
-    ) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None]:
         """Assemble the QP cost (``H``, ``f``) and inequality constraints (``W``, ``w``).
 
         Computes the soft-priority blend of the translation and rotation
@@ -237,8 +236,8 @@ class Controller:
         w_jl = np.hstack((-1.0 * (lower_joint_limits - q), 1.0 * (upper_joint_limits - q)))
 
         # RCM constraints
-        W: Optional[np.ndarray] = W_jl
-        w: Optional[np.ndarray] = w_jl
+        W: np.ndarray | None = W_jl
+        w: np.ndarray | None = w_jl
         constraint_counter = 0
 
         if self.rcm_constraints is not None:

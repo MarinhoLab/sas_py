@@ -24,10 +24,10 @@ import dqrobotics  # noqa: F401
 
 from marinholab.sas.core._core import (
     Clock,
-    Statistics,
     RobotDriver,
-    ShutdownSignaler,
     SerialManipulatorSimulatorFriendly,
+    ShutdownSignaler,
+    Statistics,
 )
 
 # ``ActuationType`` is registered nested on the class (reachable as
