@@ -1,7 +1,6 @@
 """Type stubs for the compiled extension module ``marinholab.sas.core._core``."""
 from __future__ import annotations
 
-from typing import Optional
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -20,7 +19,7 @@ __all__ = [
 class Statistics:
     """Statistic types used by the Clock class."""
 
-    Mean: "Statistics"
+    Mean: Statistics
 
 
 class ShutdownSignaler:
@@ -46,9 +45,9 @@ class Clock:
     class TimeType:
         """Enumeration of time types recorded by Clock."""
 
-        Computational: "Clock.TimeType"
-        EffectiveSampling: "Clock.TimeType"
-        Idle: "Clock.TimeType"
+        Computational: Clock.TimeType
+        EffectiveSampling: Clock.TimeType
+        Idle: Clock.TimeType
 
     def __init__(
         self, sampling_time_in_seconds: float, enable_statistics: bool = True
@@ -87,12 +86,12 @@ class Clock:
         """Return the number of times the sampling period has been missed (overrun)."""
         ...
 
-    def get_time(self, time_type: "Clock.TimeType") -> float:
+    def get_time(self, time_type: Clock.TimeType) -> float:
         """Get a time measurement for a given TimeType, in seconds."""
         ...
 
     def get_statistics(
-        self, statistics: Statistics, time_type: "Clock.TimeType"
+        self, statistics: Statistics, time_type: Clock.TimeType
     ) -> float:
         """Get a collected statistic value.
 
@@ -166,12 +165,12 @@ class SerialManipulatorSimulatorFriendly(DQ_SerialManipulator):
         - TX: Translation along the x-axis.
         """
 
-        RZ: "SerialManipulatorSimulatorFriendly.ActuationType"
-        RY: "SerialManipulatorSimulatorFriendly.ActuationType"
-        RX: "SerialManipulatorSimulatorFriendly.ActuationType"
-        TZ: "SerialManipulatorSimulatorFriendly.ActuationType"
-        TY: "SerialManipulatorSimulatorFriendly.ActuationType"
-        TX: "SerialManipulatorSimulatorFriendly.ActuationType"
+        RZ: SerialManipulatorSimulatorFriendly.ActuationType
+        RY: SerialManipulatorSimulatorFriendly.ActuationType
+        RX: SerialManipulatorSimulatorFriendly.ActuationType
+        TZ: SerialManipulatorSimulatorFriendly.ActuationType
+        TY: SerialManipulatorSimulatorFriendly.ActuationType
+        TX: SerialManipulatorSimulatorFriendly.ActuationType
 
     def __init__(
         self,
